@@ -60,14 +60,27 @@ describe('resolveManagedGitSource', () => {
     ).toBe('pat');
   });
 
-  test('env App wins over a PAT', () => {
+  test('a PAT wins over an env App — it is what the git backend actually uses', () => {
+    // managedGithubToken() short-circuits managedAdminAuth/mintManagedWriteToken.
+    // Prod 2026-09-07: a PAT stored via POST /pat during the provisioning
+    // outage was live, but /status still said "env".
     expect(
       resolveManagedGitSource({
         dbAppConfigured: false,
         envAppConfigured: true,
         patConfigured: true,
       }),
-    ).toBe('env');
+    ).toBe('pat');
+  });
+
+  test('a PAT wins over a DB App too', () => {
+    expect(
+      resolveManagedGitSource({
+        dbAppConfigured: true,
+        envAppConfigured: true,
+        patConfigured: true,
+      }),
+    ).toBe('pat');
   });
 
   test('DB App (manifest flow or pasted) wins over both an env App and a PAT', () => {

@@ -861,16 +861,24 @@ export function resolveInstallationOwnerType(
 /**
  * Pure precedence rule behind `GET /status`'s `source` field — split out so
  * it's testable without a Hono context/DB (see unit-github-app-pat.test.ts).
- * Mirrors the accessors' own resolution order: App-DB > App-env > PAT.
+ *
+ * Mirrors what the git backend ACTUALLY does, not the order the config is
+ * stored in: `managedGithubToken()` (a PAT, DB or env) short-circuits the App
+ * path in `managedAdminAuth` and `mintManagedWriteToken`
+ * (git-backends/github.ts), so when a PAT exists every managed-repo call uses
+ * it and the App is inert. Until 2026-09-07 this reported App-DB > App-env >
+ * PAT, so an operator who had just stored a PAT via POST /pat (prod, during the
+ * provisioning outage) read `source: "env"` and could not tell whether the
+ * token they stored was in use.
  */
 export function resolveManagedGitSource(input: {
   dbAppConfigured: boolean;
   envAppConfigured: boolean;
   patConfigured: boolean;
 }): ManagedGitSource {
+  if (input.patConfigured) return 'pat';
   if (input.dbAppConfigured) return 'db';
   if (input.envAppConfigured) return 'env';
-  if (input.patConfigured) return 'pat';
   return 'none';
 }
 
