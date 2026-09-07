@@ -73,7 +73,7 @@ describe('resolveManagedGitSource', () => {
     ).toBe('pat');
   });
 
-  test('a PAT wins over a DB App too', () => {
+  test('a PAT wins over a DB App as well — POST /app clears a stored PAT, but an env PAT still short-circuits a DB App', () => {
     expect(
       resolveManagedGitSource({
         dbAppConfigured: true,
@@ -83,22 +83,15 @@ describe('resolveManagedGitSource', () => {
     ).toBe('pat');
   });
 
-  test('DB App (manifest flow or pasted) wins over both an env App and a PAT', () => {
+  test('DB App wins over an env App when no PAT is configured', () => {
     expect(
       resolveManagedGitSource({
         dbAppConfigured: true,
         envAppConfigured: true,
-        patConfigured: true,
+        patConfigured: false,
       }),
     ).toBe('db');
   });
-});
-
-describe('verifyPastedGithubAppInstallation', () => {
-  function keyPair() {
-    const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
-    return privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
-  }
 
   test('signs a JWT with the pasted creds and resolves the installation owner', async () => {
     const pem = keyPair();
