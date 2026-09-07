@@ -92,6 +92,13 @@ describe('resolveManagedGitSource', () => {
       }),
     ).toBe('db');
   });
+});
+
+describe('verifyPastedGithubAppInstallation', () => {
+  function keyPair() {
+    const { privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+    return privateKey.export({ type: 'pkcs8', format: 'pem' }).toString();
+  }
 
   test('signs a JWT with the pasted creds and resolves the installation owner', async () => {
     const pem = keyPair();
